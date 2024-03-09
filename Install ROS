@@ -1,0 +1,41 @@
+Install buster on raspberry pi
+Tengo la imagen del raspian, no es fácil encontrarlo en internet
+Install ros noetic on raspberry pi
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt install -y python3-rosdep python3-rosinstall-generator python3-wstool python3-rosinstall build-essential cmake
+sudo apt install python3-catkin python3-catkin-lint python3-catkin-pkg python3-catkin-pkg-modules python3-catkin-tools
+sudo rosdep init
+rosdep update
+mkdir -p ~/ros_catkin_ws/src
+cd ~/ros_catkin_ws
+rosinstall_generator ros_comm --rosdistro noetic --deps --wet-only --tar > noetic-ros_comm-wet.rosinstall
+sudo pip install -U wstool
+	or
+sudo apt-get -y install python3-wstool
+	or
+sudo aptitude -y install python3-wstool
+wstool init src noetic-ros_comm-wet.rosinstall
+cd ~/ros_catkin_ws
+$ rosdep install -y --from-paths src --ignore-src --rosdistro noetic -r --os=debian:buster
+sudo ./src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release --install-space /opt/ros/noetic -j4
+echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+Install rosserial
+git clone https://github.com/ros-drivers/rosserial.git
+catkin_make
+Change swap size
+sudo dphys-swapfile swapoff
+sudo nano /etc/dphys-swapfile
+tienes que cambiar CONF_SWAPSIZE=100  a CONF_SWAPSIZE=1024
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+sudo reboot
+Running catkin_make
+VERBOSE=1 catkin_make -j1
+Download rosserial on Arduino ide
+Sketch->include library->Manage libraries 
+Buscar rosserial y descargar la versión 0.7.9 (IMPORTANTE la mas reciente no funciona bien)
+Running rosserial
+rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=57600
