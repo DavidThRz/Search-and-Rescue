@@ -4,16 +4,17 @@
 
 
 <!-- Transformation Configuration ... Setting Up the Relationships Between Coordinate Frames --> 
-  <node pkg="tf" type="static_transform_publisher" name="base_link_broadcaster" args="0 0 0.09 0 0 0 base_footprint base_link 30" />
-  <!-- odom to base_footprint transform will be provided by the robot_pose_ekf node -->
-  <!-- map to odom will be provided by the AMCL -->
   <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 30" />
+    <node pkg="sar_SLAM" type="odom_tf" name="tf2_odom_broadcaster"/>
+    <node pkg="sar_SLAM" type="lidar2odom" name="lidar2odom">
+    <remap from="/odom_lidar" to="/odom"/>
+    </node>
 
 <!-- Extended Kalman Filter from robot_pose_ekf Node-->
   <!-- Subscribe: /odom, /imu_data, /vo -->
   <!-- Publish: /robot_pose_ekf/odom_combined -->
-  <remap from="odom" to="odom_data_quat" />
-  <remap from="imu" to="imu/data" />
+  <!--<remap from="odom" to="odom_data_quat" />-->
+<!--
   <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
     <param name="output_frame" value="odom"/>
     <param name="base_footprint_frame" value="base_footprint"/>
@@ -25,14 +26,31 @@
     <param name="gps_used" value="false"/>
     <param name="debug" value="false"/>
     <param name="self_diagnose" value="false"/>
-  </node>
-
+    <remap from="imu_data" to="/mobile_base/sensors/imu_data" />
+  </node>-->
 <arg name="map_file" default="$(find nexus_4wd_mecanum_gazebo)/maps/my_map.yaml"/>
  <!-- Map server -->
-  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+<node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
 
-  <!-- AMCL -->
-  <include file="$(find navigation_stack)/launch/hector_slam.launch"/>
+  <!-- SLAM -->
+  <!--<include file="$(find navigation_stack)/launch/hector_slam.launch"/>-->
+<!--Launch slam_gmapping node-->
+  <node pkg="gmapping" name="slam_gmapping" type="slam_gmapping" output="screen">
+    <param name="delta" value="0.01"/>
+    <param name="xmin" value="-20"/>
+    <param name="xmax" value="20"/>
+    <param name="ymin" value="-20"/>
+    <param name="ymax" value="20"/>
+    <!--<remap from="scan" to="mybot/laser/scan"/>-->
+    <param name="base_frame" value="base_footprint" />
+
+    <param name="linearUpdate" value="0.5"/>
+    <param name="angularUpdate" value="0.436"/>
+    <param name="temporalUpdate" value="-1.0"/>
+    <param name="resampleThreshold" value="0.5"/>
+    <param name="particles" value="200"/>
+
+  </node>
 
   <!-- move_base -->
   <include file="$(find navigation_stack)/launch/move_base_only.launch">    
