@@ -3,7 +3,7 @@
 <launch>
 
     <!-- NAVIGATION -->
-    <include file="$(find navigation_stack)/launch/navigation.launch"/>
+    <include file="$(find navigation_stack)/launch/navigation_slam.launch"/>
 
     <!-- ROBOT -->
     <include file="$(find nexus_4wd_mecanum_gazebo)/launch/prueba.launch"/>
@@ -11,7 +11,7 @@
     <!-- EXPLORE LITE -->
     <include file="$(find explore_lite)/launch/explore_costmap.launch"/>
 
-    <!-- Main NODE -->
+    <!-- MAIN NODE -->
      <node name="execution" type="execution" pkg="sar_robot"/>
 
 </launch>

@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+
+<launch>
+
+    <!-- NAVIGATION - Asumo mapa ya cargado -->
+    <include file="$(find navigation_stack)/launch/navigation.launch"/>
+
+    <!-- ROBOT -->
+    <include file="$(find nexus_4wd_mecanum_gazebo)/launch/prueba.launch"/>
+    
+    <!-- FOLLOW WAYPOINTS -->
+    <!-- <include file="$(find follow_waypoints)/launch/follow_waypoints.launch"/> -->
+
+    <!-- MAIN NODE -->
+    <!-- <node name="execution" type="execution" pkg="sar_robot" launch-prefix="xterm-e gdbargs" output="screen"/> -->
+    <node name="execution" type="execution" pkg="sar_robot" output="screen"/>
+
+</launch>

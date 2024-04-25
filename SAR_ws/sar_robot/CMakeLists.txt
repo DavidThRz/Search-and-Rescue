@@ -55,7 +55,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(execution src/execution.cpp)
+add_executable(execution src/execution.cpp src/sar.cpp)
 add_dependencies(execution ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(execution ${catkin_LIBRARIES})
 
