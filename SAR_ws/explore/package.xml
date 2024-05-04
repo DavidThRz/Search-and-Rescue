@@ -16,6 +16,11 @@
   <author>Paul Bovbel</author>
   <url>https://github.com/paulbovbel/frontier_exploration</url>
   -->
+
+  <!-- TO GENERATE MESSAGES -->
+  <!-- <build_depend>message_generation</build_depend> 
+  <exec_depend>message_runtime</exec_depend>  -->
+
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roscpp</depend>

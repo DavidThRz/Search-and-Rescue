@@ -58,6 +58,7 @@ Explore::Explore()
   , prev_distance_(0)
   , last_markers_count_(0)
 {
+
   double timeout;
   double min_frontier_size;
   private_nh_.param("planner_frequency", planner_frequency_, 1.0);
@@ -68,6 +69,8 @@ Explore::Explore()
   private_nh_.param("orientation_scale", orientation_scale_, 0.0);
   private_nh_.param("gain_scale", gain_scale_, 1.0);
   private_nh_.param("min_frontier_size", min_frontier_size, 0.5);
+
+  endExplore_pub = private_nh_.advertise<std_msgs::Bool>("/endExplore", 1);
 
   search_ = frontier_exploration::FrontierSearch(costmap_client_.getCostmap(),
                                                  potential_scale_, gain_scale_,
@@ -81,6 +84,7 @@ Explore::Explore()
   ROS_INFO("Waiting to connect to move_base server");
   move_base_client_.waitForServer();
   ROS_INFO("Connected to move_base server");
+
 
   exploring_timer_ =
       relative_nh_.createTimer(ros::Duration(1. / planner_frequency_),
@@ -189,6 +193,12 @@ void Explore::makePlan()
 
   if (frontiers.empty()) {
     stop();
+
+    std_msgs::Bool msg;
+    msg.data = true;
+    endExplore_pub.publish(msg);
+    ROS_WARN("EXPLORATION FINISHED");
+
     return;
   }
 
@@ -205,6 +215,12 @@ void Explore::makePlan()
                        });
   if (frontier == frontiers.end()) {
     stop();
+
+    std_msgs::Bool msg;
+    msg.data = true;
+    endExplore_pub.publish(msg);
+    ROS_WARN("EXPLORATION FINISHED");
+
     return;
   }
   geometry_msgs::Point target_position = frontier->centroid;
@@ -219,8 +235,20 @@ void Explore::makePlan()
   }
   // black list if we've made no progress for a long time
   if (ros::Time::now() - last_progress_ > progress_timeout_) {
+
+    if (frontiers.size() == 1) {
+      stop();
+
+      std_msgs::Bool msg;
+      msg.data = true;
+      endExplore_pub.publish(msg);
+      ROS_WARN("EXPLORATION FINISHED");
+
+      return;
+    }
+
     frontier_blacklist_.push_back(target_position);
-    ROS_DEBUG("Adding current goal to black list");
+    ROS_WARN("Adding current goal to black list");
     makePlan();
     return;
   }
@@ -294,9 +322,25 @@ void Explore::stop()
 
 }  // namespace explore
 
+bool allowInitialization = false;
+void initCheckCallback(const std_msgs::Bool::ConstPtr& msg)
+{
+  ROS_INFO("AAAAAAAAAAA -- Recibida orden de inicio");
+  allowInitialization = msg->data;
+}
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "explore");
+
+  ros::NodeHandle nh;
+  ros::Subscriber initExplore_sub = nh.subscribe<std_msgs::Bool>("/initExplore", 1, initCheckCallback);
+  while (allowInitialization == false)  
+  {
+    // Esperar a recibir orden de inicio
+    ros::spinOnce();
+  }
+
   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
                                      ros::console::levels::Debug)) {
     ros::console::notifyLoggerLevelsChanged();
