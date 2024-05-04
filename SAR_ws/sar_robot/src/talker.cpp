@@ -1,10 +1,12 @@
 
 #include "ros/ros.h"
 
-#include "sar_robot/missionTarget.h"
+// #include "sar_robot/missionTarget.h"
+#include <std_msgs/Bool.h>
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 
-sar_robot::missionTarget message;
+// sar_robot::missionTarget message;
+std_msgs::Bool messageBool;
 geometry_msgs::PoseWithCovarianceStamped initPose;
 
 int main(int argc, char *argv[]) {
@@ -14,7 +16,8 @@ int main(int argc, char *argv[]) {
 
     ros::Rate rate(10);
 
-    ros::Publisher msg_pub = n.advertise<sar_robot::missionTarget>("/targetIdentified", 5);
+    // ros::Publisher msg_pub = n.advertise<sar_robot::missionTarget>("/targetIdentified", 5);
+    ros::Publisher msg_pub = n.advertise<std_msgs::Bool>("/targetIdentified", 5);
     ros::Publisher initPose_pub = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose_waypoints", 5);
     
     bool targetIdentified;
@@ -68,10 +71,11 @@ int main(int argc, char *argv[]) {
     int count = 0;
     while(ros::ok()) {
 
-        message.identified = targetIdentified;
+        // message.identified = targetIdentified;
+        messageBool.data = targetIdentified;
 
         if (num == 1 || num == 2) 
-            msg_pub.publish(message);
+            msg_pub.publish(messageBool);
         else if (num == 3 || num == 4 || num == 5) 
             initPose_pub.publish(initPose);
 

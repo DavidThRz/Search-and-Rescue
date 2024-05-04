@@ -3,8 +3,10 @@
 
 #include "sar.hpp"
 
-#include "sar_robot/missionTarget.h"
+// #include "sar_robot/missionTarget.h"
 #include "geometry_msgs/PoseStamped.h"
+
+#include <std_msgs/Bool.h>
 
 #define MAP_MIN_X -5
 #define MAP_MAX_X 4
@@ -19,6 +21,10 @@ struct Point2f {
 
 Point2f initLocation;
 
+bool allowExplore;
+
+ros::Publisher initExplore_pub;
+
 
 // Global instance for class SAR_Robot
 SAR_Robot omniRobot;
@@ -32,12 +38,12 @@ double distToGoal(geometry_msgs::PoseWithCovarianceStamped goal, geometry_msgs::
     return dist;
 }
 
-double distToGoal(geometry_msgs::PoseStamped goal, geometry_msgs::PoseWithCovarianceStamped location) 
-{
-    double dist = sqrt(pow(goal.pose.position.x - location.pose.pose.position.x, 2) + pow(goal.pose.position.y - location.pose.pose.position.y, 2));
+// double distToGoal(geometry_msgs::PoseStamped goal, geometry_msgs::PoseWithCovarianceStamped location) 
+// {
+//     double dist = sqrt(pow(goal.pose.position.x - location.pose.pose.position.x, 2) + pow(goal.pose.position.y - location.pose.pose.position.y, 2));
 
-    return dist;
-}
+//     return dist;
+// }
 
 double distToGoal(move_base_msgs::MoveBaseActionGoal goal, geometry_msgs::PoseWithCovarianceStamped location) 
 {
@@ -47,9 +53,10 @@ double distToGoal(move_base_msgs::MoveBaseActionGoal goal, geometry_msgs::PoseWi
 }
 
 // Callback for targetIdentified topic - published by AI_vision node when target is identified
-void targetIdentified_cb(const sar_robot::missionTarget::ConstPtr& msg) {
+// void targetIdentified_cb(const sar_robot::missionTarget::ConstPtr& msg) {
+void targetIdentified_cb(const std_msgs::Bool::ConstPtr& msg) {
 
-    omniRobot.targetIdentified = msg->identified;
+    omniRobot.targetIdentified = msg->data;
 
 }
 
@@ -83,19 +90,20 @@ int main(int argc, char *argv[]) {
 
     ros::init(argc, argv, "execution");
     ros::NodeHandle n;
+    ros::NodeHandle private_nh("~");
 
-    ros::Rate rate(10);     // 10Hz
+    ros::Rate rate(1);     // 1Hz
 
-    ros::Subscriber targetIdentified_sub = n.subscribe<sar_robot::missionTarget>("/targetIdentified", 1, targetIdentified_cb);
+    private_nh.param("allowExplore", allowExplore, false);    
+
+    ros::Subscriber targetIdentified_sub = n.subscribe<std_msgs::Bool>("/targetIdentified", 1, targetIdentified_cb);
     ros::Subscriber location_sub         = n.subscribe<geometry_msgs::PoseWithCovarianceStamped>("/amcl_pose", 1, location_cb);
     
-    // ros::Publisher currentGoal_pub       = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose_waypoints", 1);
-    // ros::Publisher currentGoal_pub       = n.advertise<geometry_msgs::PoseStamped>("/move_base/goal", 1);
+    initExplore_pub                      = n.advertise<std_msgs::Bool>("/initExplore", 1);
     ros::Publisher currentGoal_pub       = n.advertise<move_base_msgs::MoveBaseActionGoal>("/move_base/goal", 1);
-    // ros::Publisher waypointsNavStart_pub = n.advertise<std_msgs::Empty>("/path_ready", 1);
-    // ros::Publisher waypointsNavReset_pub = n.advertise<std_msgs::Empty>("/path_reset", 1);
 
-    ROS_INFO("Execution node ready");
+
+    ROS_INFO("Execution node ready -- %s", allowExplore ? "true" : "false");
 
     while(ros::ok()) {
 
@@ -108,15 +116,57 @@ int main(int argc, char *argv[]) {
         switch(omniRobot.mission_status) {
             case MISSION_STAT_PRECHECK:
                 
+                ROS_INFO("MISSION STATUS: PRECHECK");
                 break;
+
+            
+            case MISSION_STAT_EXPLORE:
+                {
+                    ROS_INFO("MISSION STATUS: EXPLORE");
+
+                    // static geometry_msgs::PoseWithCovarianceStamped lastLocation = omniRobot.currentLocation;                   
+                    // static ros::Time lastExploreCheck = ros::Time::now();
+
+                    // double dist = distToGoal(lastLocation, omniRobot.currentLocation);
+                    // if (dist < 0.1)
+                    // {
+                    //     double timeDiff = ros::Duration(ros::Time::now() - lastExploreCheck).toSec();
+                    //     if (timeDiff > 10)
+                    //     {
+                    //         // Si se atasca, volver al inicio
+                    //         omniRobot.currentGoal.header.seq++;
+                    //         omniRobot.currentGoal.header.stamp = ros::Time::now();
+                    //         omniRobot.currentGoal.goal.target_pose.header.seq++;
+                    //         omniRobot.currentGoal.goal.target_pose.header.stamp = ros::Time::now();
+
+                    //         omniRobot.currentGoal.goal.target_pose.pose.position.x = initLocation.x;
+                    //         omniRobot.currentGoal.goal.target_pose.pose.position.y = initLocation.y;
+
+                    //         // currentGoal_pub.publish(omniRobot.currentGoal);
+
+                    //         ROS_INFO("ATASCADO... volviendo al inicio");
+
+                    //         lastExploreCheck = ros::Time::now();
+
+                    //     }
+                    // }
+                    // else
+                    // {
+                    //     lastLocation = omniRobot.currentLocation;
+                    //     lastExploreCheck = ros::Time::now();
+                    // }
+
+                    break;
+          
+                }   //Case MISSION_STAT_EXPLORE
 
             case MISSION_STAT_WAYPOINTS:
                 {
                 
                 double dist = distToGoal(omniRobot.currentGoal, omniRobot.currentLocation);
-                // ROS_INFO("Current Goal: %f, %f", omniRobot.currentGoal.goal.target_pose.pose.position.x, omniRobot.currentGoal.goal.target_pose.pose.position.y);
-                // ROS_INFO("Current Location: %f, %f", omniRobot.currentLocation.pose.pose.position.x, omniRobot.currentLocation.pose.pose.position.y);
-                // ROS_INFO("DISSST: %f", dist);
+                ROS_INFO("Current Goal: %f, %f", omniRobot.currentGoal.goal.target_pose.pose.position.x, omniRobot.currentGoal.goal.target_pose.pose.position.y);
+                ROS_INFO("Current Location: %f, %f", omniRobot.currentLocation.pose.pose.position.x, omniRobot.currentLocation.pose.pose.position.y);
+                ROS_INFO("DISSST: %f", dist);
 
                 static ros::Time lastCheck = ros::Time::now();
 
@@ -143,7 +193,7 @@ int main(int argc, char *argv[]) {
                 
                     double timeDiff = ros::Duration(ros::Time::now() - lastCheck).toSec();
 
-                    if (timeDiff > 5) 
+                    if (timeDiff > 30) 
                     {
                         omniRobot.currentGoal.header.seq++;
                         omniRobot.currentGoal.header.stamp = ros::Time::now();
@@ -184,7 +234,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Check and change mission status
-        omniRobot.SAR_Robot::checkMissionStatus();
+        omniRobot.SAR_Robot::changeMissionStatus();
 
         ros::spinOnce();
         rate.sleep();
@@ -195,22 +245,38 @@ int main(int argc, char *argv[]) {
 
 
 /* Function to check and change mission status */
-bool SAR_Robot::checkMissionStatus()  
+void SAR_Robot::changeMissionStatus()  
 {
     if (this->mission_status == MISSION_STAT_PRECHECK) {
 
         // All precondititions have been met?
-        if (this->targetIdentified == false) 
+        if (this->targetIdentified == false)
         {
-            this->mission_status = MISSION_STAT_WAYPOINTS;
+            if (allowExplore)
+            {
+                this->mission_status = MISSION_STAT_EXPLORE;
 
-            initLocation.x = this->currentLocation.pose.pose.position.x;
-            initLocation.y = this->currentLocation.pose.pose.position.y;
+                std_msgs::Bool msg;
+                msg.data = true;
+                initExplore_pub.publish(msg);
 
-            ROS_INFO("MISSION STATUS: changing to WAYPOINTS");
+                ROS_INFO("MISSION STATUS: changing to EXPLORE");
+            }
+            else
+            {
+                this->mission_status = MISSION_STAT_WAYPOINTS;
+
+                initLocation.x = this->currentLocation.pose.pose.position.x;
+                initLocation.y = this->currentLocation.pose.pose.position.y;
+
+                ROS_INFO("MISSION STATUS: changing to WAYPOINTS");
+            }
         }
 
-        return 1;
+    
+    } else if (this->mission_status == MISSION_STAT_EXPLORE) {
+
+        ROS_INFO("EXPLOREEEE");
 
     } else if (this->mission_status == MISSION_STAT_WAYPOINTS) {
 
@@ -221,7 +287,6 @@ bool SAR_Robot::checkMissionStatus()
             ROS_INFO("MISSION STATUS: changing to RETURN");
         }
         
-        return 1;
 
     } else if (this->mission_status == MISSION_STAT_RETURN) {
 
@@ -229,7 +294,6 @@ bool SAR_Robot::checkMissionStatus()
         this->mission_status = MISSION_STAT_COMPLETE;
         ROS_INFO("MISSION STATUS: MISSION COMPLETE");
 
-        return 0;
 
     } 
 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+
+<launch>
+
+    <!-- NAVIGATION -->
+    <include file="$(find navigation_stack)/launch/navigation_slam_nomap.launch"/>
+
+    <!-- ROBOT -->
+    <include file="$(find nexus_4wd_mecanum_gazebo)/launch/prueba.launch"/>
+    
+    <!-- EXPLORE LITE -->
+    <include file="$(find explore_lite)/launch/explore_costmap.launch"/>
+
+    <!-- MAIN NODE -->
+    <node name="execution" type="execution" pkg="sar_robot" output="screen">
+        <param name="allowExplore" type="bool" value="true"/>
+    </node>
+
+</launch>

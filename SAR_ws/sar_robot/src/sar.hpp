@@ -9,9 +9,10 @@
 
 
 #define MISSION_STAT_PRECHECK 0
-#define MISSION_STAT_WAYPOINTS 1
-#define MISSION_STAT_RETURN 2
-#define MISSION_STAT_COMPLETE 3
+#define MISSION_STAT_EXPLORE 1
+#define MISSION_STAT_WAYPOINTS 2
+#define MISSION_STAT_RETURN 3
+#define MISSION_STAT_COMPLETE 4
 
 
 class SAR_Robot {
@@ -65,6 +66,6 @@ public:
     }
 
     /* Function to check and change mission status */
-    bool checkMissionStatus();
+    void changeMissionStatus();
 
 };

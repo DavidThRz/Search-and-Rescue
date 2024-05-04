@@ -7,12 +7,11 @@
 
     <!-- ROBOT -->
     <include file="$(find nexus_4wd_mecanum_gazebo)/launch/prueba.launch"/>
-    
-    <!-- FOLLOW WAYPOINTS -->
-    <!-- <include file="$(find follow_waypoints)/launch/follow_waypoints.launch"/> -->
 
     <!-- MAIN NODE -->
     <!-- <node name="execution" type="execution" pkg="sar_robot" launch-prefix="xterm-e gdbargs" output="screen"/> -->
-    <node name="execution" type="execution" pkg="sar_robot" output="screen"/>
+    <node name="execution" type="execution" pkg="sar_robot" output="screen">
+        <param name="allowExplore" value="false"/>
+    </node>
 
 </launch>
