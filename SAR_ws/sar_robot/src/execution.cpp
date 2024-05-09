@@ -252,6 +252,12 @@ void SAR_Robot::changeMissionStatus()
     
     } else if (this->mission_status == MISSION_STAT_EXPLORE) {
 
+        if (this->targetIdentified == false)
+        {
+            this->mission_status = MISSION_STAT_RETURN;
+            ROS_INFO("MISSION STATUS: changing to RETURN");
+        }
+
         ROS_INFO("EXPLOREEEE");
 
     } else if (this->mission_status == MISSION_STAT_WAYPOINTS) {
