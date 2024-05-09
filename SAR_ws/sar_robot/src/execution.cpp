@@ -114,123 +114,99 @@ int main(int argc, char *argv[]) {
 
         /* Comportamiento en base a mission status */
         switch(omniRobot.mission_status) {
-            case MISSION_STAT_PRECHECK:
-                
-                ROS_INFO("MISSION STATUS: PRECHECK");
-                break;
-
+        case MISSION_STAT_PRECHECK:
             
-            case MISSION_STAT_EXPLORE:
-                {
-                    ROS_INFO("MISSION STATUS: EXPLORE");
+            ROS_INFO("MISSION STATUS: PRECHECK");
+            break;
 
-                    // static geometry_msgs::PoseWithCovarianceStamped lastLocation = omniRobot.currentLocation;                   
-                    // static ros::Time lastExploreCheck = ros::Time::now();
+        
+        case MISSION_STAT_EXPLORE:
+        {
+            ROS_INFO("MISSION STATUS: EXPLORE");
+            break;
+    
+        }   //Case MISSION_STAT_EXPLORE
 
-                    // double dist = distToGoal(lastLocation, omniRobot.currentLocation);
-                    // if (dist < 0.1)
-                    // {
-                    //     double timeDiff = ros::Duration(ros::Time::now() - lastExploreCheck).toSec();
-                    //     if (timeDiff > 10)
-                    //     {
-                    //         // Si se atasca, volver al inicio
-                    //         omniRobot.currentGoal.header.seq++;
-                    //         omniRobot.currentGoal.header.stamp = ros::Time::now();
-                    //         omniRobot.currentGoal.goal.target_pose.header.seq++;
-                    //         omniRobot.currentGoal.goal.target_pose.header.stamp = ros::Time::now();
+        case MISSION_STAT_WAYPOINTS:
+        {
+            ROS_INFO("MISSION STATUS: WAYPOINTS");
+        
+            double dist = distToGoal(omniRobot.currentGoal, omniRobot.currentLocation);
+            ROS_INFO("Current Goal: %f, %f", omniRobot.currentGoal.goal.target_pose.pose.position.x, omniRobot.currentGoal.goal.target_pose.pose.position.y);
+            ROS_INFO("Current Location: %f, %f", omniRobot.currentLocation.pose.pose.position.x, omniRobot.currentLocation.pose.pose.position.y);
+            ROS_INFO("DISSST: %f", dist);
 
-                    //         omniRobot.currentGoal.goal.target_pose.pose.position.x = initLocation.x;
-                    //         omniRobot.currentGoal.goal.target_pose.pose.position.y = initLocation.y;
+            static ros::Time lastCheck = ros::Time::now();
 
-                    //         // currentGoal_pub.publish(omniRobot.currentGoal);
+            if (dist < 0.3) {   // Waypoint reached
+                ROS_INFO("Waypoint reached... sending new Waypoint");
 
-                    //         ROS_INFO("ATASCADO... volviendo al inicio");
-
-                    //         lastExploreCheck = ros::Time::now();
-
-                    //     }
-                    // }
-                    // else
-                    // {
-                    //     lastLocation = omniRobot.currentLocation;
-                    //     lastExploreCheck = ros::Time::now();
-                    // }
-
-                    break;
-          
-                }   //Case MISSION_STAT_EXPLORE
-
-            case MISSION_STAT_WAYPOINTS:
-                {
-                
-                double dist = distToGoal(omniRobot.currentGoal, omniRobot.currentLocation);
-                ROS_INFO("Current Goal: %f, %f", omniRobot.currentGoal.goal.target_pose.pose.position.x, omniRobot.currentGoal.goal.target_pose.pose.position.y);
-                ROS_INFO("Current Location: %f, %f", omniRobot.currentLocation.pose.pose.position.x, omniRobot.currentLocation.pose.pose.position.y);
-                ROS_INFO("DISSST: %f", dist);
-
-                static ros::Time lastCheck = ros::Time::now();
-
-                if (dist < 0.3) {   // Waypoint reached
-                    ROS_INFO("Waypoint reached... sending new Waypoint");
-
-                    // MoveBaseActionGoal
-                    omniRobot.currentGoal.header.seq++;
-                    omniRobot.currentGoal.header.stamp = ros::Time::now();
-                    omniRobot.currentGoal.goal.target_pose.header.seq++;
-                    omniRobot.currentGoal.goal.target_pose.header.stamp = ros::Time::now();
-
-                    Point2f p = getRandomCoordinate();
-                    omniRobot.currentGoal.goal.target_pose.pose.position.x = p.x;
-                    omniRobot.currentGoal.goal.target_pose.pose.position.y = p.y;
-
-                    // Publicar siguiente waypoint
-                    currentGoal_pub.publish(omniRobot.currentGoal);
-
-                    lastCheck = ros::Time::now();
-                }
-                else
-                {
-                
-                    double timeDiff = ros::Duration(ros::Time::now() - lastCheck).toSec();
-
-                    if (timeDiff > 30) 
-                    {
-                        omniRobot.currentGoal.header.seq++;
-                        omniRobot.currentGoal.header.stamp = ros::Time::now();
-                        omniRobot.currentGoal.goal.target_pose.header.seq++;
-                        omniRobot.currentGoal.goal.target_pose.header.stamp = ros::Time::now();
-
-                        Point2f p = getRandomCoordinate();
-
-                        omniRobot.currentGoal.goal.target_pose.pose.position.x = p.x;
-                        omniRobot.currentGoal.goal.target_pose.pose.position.y = p.y;
-
-                        currentGoal_pub.publish(omniRobot.currentGoal);
-
-                        lastCheck = ros::Time::now();
-                    }
-
-                }
-
-                break;
-                }
-
-            case MISSION_STAT_RETURN:
-                
-                break;
-
-            case MISSION_STAT_COMPLETE:
+                // MoveBaseActionGoal
                 omniRobot.currentGoal.header.seq++;
                 omniRobot.currentGoal.header.stamp = ros::Time::now();
                 omniRobot.currentGoal.goal.target_pose.header.seq++;
                 omniRobot.currentGoal.goal.target_pose.header.stamp = ros::Time::now();
 
                 Point2f p = getRandomCoordinate();
+                omniRobot.currentGoal.goal.target_pose.pose.position.x = p.x;
+                omniRobot.currentGoal.goal.target_pose.pose.position.y = p.y;
 
-                omniRobot.currentGoal.goal.target_pose.pose.position.x = initLocation.x;
-                omniRobot.currentGoal.goal.target_pose.pose.position.y = initLocation.y;
-
+                // Publicar siguiente waypoint
                 currentGoal_pub.publish(omniRobot.currentGoal);
+
+                lastCheck = ros::Time::now();
+            }
+            else
+            {
+            
+                double timeDiff = ros::Duration(ros::Time::now() - lastCheck).toSec();
+
+                if (timeDiff > 30) 
+                {
+                    omniRobot.currentGoal.header.seq++;
+                    omniRobot.currentGoal.header.stamp = ros::Time::now();
+                    omniRobot.currentGoal.goal.target_pose.header.seq++;
+                    omniRobot.currentGoal.goal.target_pose.header.stamp = ros::Time::now();
+
+                    Point2f p = getRandomCoordinate();
+
+                    omniRobot.currentGoal.goal.target_pose.pose.position.x = p.x;
+                    omniRobot.currentGoal.goal.target_pose.pose.position.y = p.y;
+
+                    currentGoal_pub.publish(omniRobot.currentGoal);
+
+                    lastCheck = ros::Time::now();
+                }
+
+            }
+
+            break;
+        }
+
+        case MISSION_STAT_RETURN:
+
+            ROS_INFO("MISSION STATUS: RETURN");
+            
+            break;
+
+        case MISSION_STAT_COMPLETE:
+
+            ROS_INFO("MISSION STATUS: COMPLETE");
+
+            omniRobot.currentGoal.header.seq++;
+            omniRobot.currentGoal.header.stamp = ros::Time::now();
+            omniRobot.currentGoal.goal.target_pose.header.seq++;
+            omniRobot.currentGoal.goal.target_pose.header.stamp = ros::Time::now();
+
+            Point2f p = getRandomCoordinate();
+
+            omniRobot.currentGoal.goal.target_pose.pose.position.x = initLocation.x;
+            omniRobot.currentGoal.goal.target_pose.pose.position.y = initLocation.y;
+
+            currentGoal_pub.publish(omniRobot.currentGoal);
+
+            break;
+
         }
 
         // Check and change mission status
