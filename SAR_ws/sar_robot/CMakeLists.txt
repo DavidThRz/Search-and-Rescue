@@ -62,6 +62,9 @@ target_link_libraries(execution ${catkin_LIBRARIES})
 add_executable(talker src/talker.cpp)
 target_link_libraries(talker ${catkin_LIBRARIES})
 
+add_executable(cameraNode src/cameraNode.cpp)
+target_link_libraries(cameraNode ${catkin_LIBRARIES} i2c)
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/detector_goals.cpp
